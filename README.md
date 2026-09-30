@@ -1,45 +1,52 @@
-# delegate
+# herdr-skills
 
-A single agent skill: hand one self-contained coding task to a subordinate `pi`
-agent running in a new [herdr](https://herdr.dev) pane, wait for it to finish,
-and report its summary back.
+Agent skills for multi-agent work on top of [herdr](https://herdr.dev): drive
+the `herdr` CLI to spawn, brief, and collect subordinate agents.
 
-The playbook lives at [`skills/delegate/SKILL.md`](skills/delegate/SKILL.md).
+Each skill is a directory under `skills/<name>/` with its own `SKILL.md`.
 
-## Why
+## Skills
 
-A task can be handed off end to end: write a self-contained brief, spawn a
-subordinate agent on a (usually local) model in a sibling pane, hand it the
-brief, poll until it settles, then read its summary from the session file and
-close the pane. The sub-agent sees nothing of the parent's conversation, so the
-brief is its entire interface.
+| Skill | What it does |
+| --- | --- |
+| [`delegate`](skills/delegate/SKILL.md) | Hand one self-contained task to a subordinate `pi` agent in a new herdr pane, wait for it to finish, and report its summary. |
 
 ## Requirements
 
 - Running inside herdr (`HERDR_ENV=1`).
 - `herdr` on `PATH` (0.9.x).
-- `pi` available, with whatever models the brief names — see
+- `pi` available, with whatever models a skill names — see
   `~/.pi/agent/models.json`.
 
 ## Install
 
-The skill is a plain directory; point your agent's skills directory at it:
+Install a skill from GitHub with the [skills CLI](https://skills.sh):
+
+```bash
+# one skill, installed globally
+npx skills add andrewchng/herdr-skills --skill delegate -g -y
+
+# or every skill in this repo
+npx skills add andrewchng/herdr-skills --all
+```
+
+Or install from a local checkout:
 
 ```bash
 npx skills add ./skills/delegate
 
-# or symlink it yourself:
+# manual symlink equivalent:
 ln -s "$PWD/skills/delegate" ~/.pi/agent/skills/delegate
 ```
 
-## The loop
-
-**brief → spawn → hand off → close.** Full detail is in the skill: the exact
-`herdr pane` commands, how to detect the handoff took, the blocked-pane path,
-and where the summary lives (`agent_session.value`).
+Repeat per skill. Editing a skill in a local checkout updates the linked copy in
+place.
 
 ## Layout
 
 ```
-skills/delegate/SKILL.md   the delegation playbook
+skills/
+  delegate/SKILL.md   hand one task to a subordinate pi agent
 ```
+
+New skills go under `skills/<name>/SKILL.md`.
