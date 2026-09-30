@@ -1,40 +1,36 @@
-# Context — herdr-orchestrator
+# Context — delegate
 
-Single-context repo. One `CONTEXT.md` at the root; ADRs under `docs/adr/` when a decision is worth recording.
+Single-context repo. One `CONTEXT.md` at the root; ADRs under `docs/adr/` only
+if a decision is ever worth recording.
 
 ## What this is
 
-Herdr is a terminal-native agent multiplexer: a background server owns real terminal processes, and coding agents run inside panes with detected state (`working`, `blocked`, `done`, `idle`, `unknown`). Herdr already gives us worktrees, agent spawning/prompting/waits, a CLI, and a plugin surface. This repo supplies the **orchestration layer** Herdr doesn't: a way to fan work out across child agents and coordinate them from one parent.
+A single agent skill for **delegation inside herdr**. The parent agent writes a
+self-contained brief, spawns a subordinate `pi` agent in a sibling pane, hands
+it the brief, waits for the turn to end, and reports the summary. Herdr supplies
+the panes; this skill supplies the loop.
 
 ## Glossary
 
 Use these terms. Don't drift to synonyms.
 
-- **Orchestrator** — the agent running in the parent workspace. Decides the task list, spawns children, and coordinates. The brain.
-- **Parent workspace** — the workspace the orchestrator runs in. Usually the repo root workspace.
-- **Child** — one worktree workspace per task, each with its own agent running in the worktree's root pane. Does the work.
-- **Squad** — the set of children the orchestrator spawned. Durable registry in `squad.json` (plugin state dir).
-- **Spawn** — create a child (worktree + agent + initial task). The plugin's `spawn` action, or the raw CLI primitives.
-- **Drive** — submit input to a child and/or wait on it (`agent prompt --wait`, `agent wait`).
-- **Blocked** — Herdr recognized an approval/question UI; the child is waiting for input. Not a failure.
-- **Done** — idle but not yet seen. Distinct from `idle` (seen, ready for input).
-- **Worktree** — a Git checkout opened as its own workspace, with `worktree` provenance linking it to the parent repo.
+- **Parent agent** — the agent running the skill. Owns the conversation and the
+  brief.
+- **Sub-agent** — the subordinate `pi` instance in its own pane. Sees nothing of
+  the parent's conversation.
+- **Brief** — the sub-agent's entire interface: goal, solution sketch, repo
+  conventions, one checkable completion criterion, and the reporting rule.
+  Written to `$TMPDIR`, never inside the repo.
+- **Handoff** — the single message that points the sub-agent at the brief; it
+  doubles as the keypress that dismisses pi's welcome screen.
+- **Completion criterion** — the exact verify command that must pass before the
+  sub-agent reports done.
+- **Blocked** — the sub-agent asked a question; the parent answers it or
+  escalates to the human.
+- **Session file** — pi's `.jsonl` transcript for the sub-agent, exposed by
+  `herdr pane get` as `agent_session.value`. Small panes collapse pi's
+  transcript, so the summary is read from here, not the pane.
 
-## Plugin surface
+## Layout
 
-- `herdr-plugin.toml` — `orchestrator` plugin. `spawn` action (bulk-create from `tasks.json`), `board` pane (live squad status).
-- `src/` — plugin implementation (Bun). Calls Herdr through `HERDR_BIN_PATH` / the CLI.
-- `skills/orchestrator/SKILL.md` — the orchestrating agent's playbook (the skill half of this project).
-- `skills/delegate/SKILL.md` — the single-child delegation loop (brief, spawn, hand off, collect, close).
-
-## Config and state
-
-- **Config dir** (user-editable): `herdr plugin config-dir orchestrator` → `tasks.json` (the task list), optional `orchestrator.toml` (defaults like `parent_workspace_id`, `kind`).
-- **State dir** (plugin-owned): `squad.json` — the authoritative child registry; live status is enriched from `herdr agent list` at read time.
-
-## Rules of thumb
-
-- One task per child; parallel work is the point.
-- `spawn` is the bulk convenience; the raw CLI is for fine-grained control. Both share the same primitives.
-- Never trust a stored id across a close — re-read current ids.
-- The orchestrator answers blocked children, escalates to the human, or closes them. It doesn't silently let a squad sit stuck.
+- `skills/delegate/SKILL.md` — the delegation playbook.
