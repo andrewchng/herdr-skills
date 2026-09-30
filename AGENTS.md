@@ -10,5 +10,5 @@ linked copy in place.
 
 Current skills:
 
-- `skills/delegate` — hand one self-contained task to a subordinate `pi` agent,
-  wait for it, and report the summary.
+- `skills/delegate` — hand one self-contained task to a subordinate agent (a
+  locally-hosted `pi` by default), wait for it, and report the summary.

@@ -9,14 +9,14 @@ Each skill is a directory under `skills/<name>/` with its own `SKILL.md`.
 
 | Skill | What it does |
 | --- | --- |
-| [`delegate`](skills/delegate/SKILL.md) | Hand one self-contained task to a subordinate `pi` agent in a new herdr pane, wait for it to finish, and report its summary. |
+| [`delegate`](skills/delegate/SKILL.md) | Hand one self-contained task to a subordinate agent (a locally-hosted `pi` by default) in a new herdr pane, wait for it to finish, and report its summary. The harness and model sit in one editable Defaults block. |
 
 ## Requirements
 
 - Running inside herdr (`HERDR_ENV=1`).
 - `herdr` on `PATH` (0.9.x).
-- `pi` available, with whatever models a skill names — see
-  `~/.pi/agent/models.json`.
+- An agent CLI for the harness you name (default: `pi`) — for `pi`, whatever
+  models a skill names, from `~/.pi/agent/models.json`.
 
 ## Install
 
@@ -46,7 +46,7 @@ place.
 
 ```
 skills/
-  delegate/SKILL.md   hand one task to a subordinate pi agent
+  delegate/SKILL.md   hand one task to a subordinate agent
 ```
 
 New skills go under `skills/<name>/SKILL.md`.
