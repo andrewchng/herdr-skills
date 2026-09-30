@@ -24,7 +24,8 @@ term to something the repo actually uses.
 - **Brief** — a sub-agent's entire interface: goal, solution sketch, repo
   conventions, one checkable completion criterion, and the reporting rule.
   Written to `$TMPDIR`, never inside the repo.
-- **Handoff** — the single message that points a sub-agent at its brief.
+- **Handoff** — how the brief reaches a sub-agent: pi's initial prompt,
+  passed at spawn as `@<brief path>`.
 - **Completion criterion** — the exact verify command that must pass before a
   sub-agent reports done.
 - **Blocked** — a sub-agent asked a question; the parent answers it or escalates

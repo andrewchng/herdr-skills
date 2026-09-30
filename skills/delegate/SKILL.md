@@ -7,11 +7,11 @@ description: Hand a self-contained coding task to a subordinate pi agent running
 
 Requires running inside herdr (`HERDR_ENV=1`); otherwise say so and stop. Raw pane commands and ids live in the herdr skill — this file is only the delegation loop.
 
-The loop: **brief → spawn → hand off → close**.
+The loop: **brief → spawn → collect → close**.
 
 ## 1. Write the brief
 
-The brief is the sub-agent's entire interface — it sees nothing of this conversation. Write it to `$TMPDIR/delegate-<task>.md`, never inside the repo:
+The brief is the sub-agent's entire interface — it sees nothing of this conversation. Write it to `$TMPDIR/delegate-<task>.md`, never inside the repo. It becomes the sub-agent's first prompt (passed via `@file`), so it must be self-contained:
 
 - goal plus a solution sketch: files to touch, the shape of the change
 - repo conventions the environment doesn't already confess (test runner, lint/format commands)
@@ -20,26 +20,17 @@ The brief is the sub-agent's entire interface — it sees nothing of this conver
 
 ## 2. Spawn
 
-Local models by default: `local-ds4/deepseek-v4-flash` (other local providers in `~/.pi/agent/models.json`); use whatever model the user names. Find your own pane in `herdr pane list` — the one with `"focused": true` — split off it without stealing focus, and parse the new pane id:
+Local models by default: `local-ds4/deepseek-v4-flash` (other local providers in `~/.pi/agent/models.json`); use whatever model the user names. Find your own pane in `herdr pane list` — the one with `"focused": true` — split off it without stealing focus, and parse the new pane id. Pass the brief as pi's initial prompt with `@<absolute brief path>`:
 
 ```bash
 NEW_PANE=$(herdr pane split <your-pane-id> --direction right --no-focus \
   | python3 -c 'import sys,json; print(json.load(sys.stdin)["result"]["pane"]["pane_id"])')
-herdr pane run "$NEW_PANE" "pi --model local-ds4/deepseek-v4-flash --name '<task>'"
+herdr pane run "$NEW_PANE" "pi --model local-ds4/deepseek-v4-flash --name '<task>' @<absolute brief path>"
 ```
 
-## 3. Hand off
+pi expands the `@file` into the session's first prompt and submits it via `session.prompt` before the TUI loop runs — so there is no welcome screen to dismiss and no second keystroke to send. Don't launch bare `pi` and type the brief in afterward. If the path is wrong, pi prints `Error: File not found` and exits; `herdr pane read "$NEW_PANE"` shows it.
 
-Wait for pi's welcome screen, then send the pointer — the handoff keystrokes double as the keypress that dismisses the welcome and lands in the prompt:
-
-```bash
-herdr pane wait-output "$NEW_PANE" --match "Press any key" --timeout 30000 || true
-herdr pane run "$NEW_PANE" "Read <absolute brief path> — it is your full task brief. Carry it out exactly. <verify command> must pass before you finish. Do not commit. Report a summary of what changed when done."
-```
-
-Verify the handoff took: `herdr pane read` and look for the `↳ Read` echo of the brief path. If the prompt is still empty, resend.
-
-## 4. Close the loop
+## 3. Close the loop
 
 There is no `wait agent-status` in herdr 0.9.x — poll the pane's `agent_status` until the turn ends:
 
